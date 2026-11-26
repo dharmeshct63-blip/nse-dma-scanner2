@@ -1,0 +1,34 @@
+# 50-200 DMA Convergence Strategy Configuration
+universe:
+  min_market_cap_cr: 300.0
+  min_median_turnover_cr: 1.0
+  allowed_series: ["EQ", "BE", "BZ", "SM", "ST"]
+
+discovery:
+  ratio_min: 0.94
+  ratio_max: 0.96
+  slope_lookback_days: 10
+  dma200_flat_tolerance: 0.998  # 200 DMA >= 99.8% of 10 days ago
+
+fundamentals:
+  min_sales_3y_cagr: 10.0
+  min_pat_3y_cagr: 12.0
+  min_roce: 15.0
+  min_roe: 12.0
+  max_debt_to_equity: 0.5
+  require_positive_ocf: true
+  max_pledge_pct: 0.0
+
+entry:
+  breakout_lookback_days: 20
+  volume_multiplier: 1.5
+  max_gap_pct: 1.5
+
+risk:
+  portfolio_capital_inr: 500000.0
+  risk_per_trade_pct: 0.5
+  atr_period: 14
+  stop_atr_multiplier: 2.0
+  swing_low_lookback_days: 10
+  max_position_pct: 10.0
+  regime_cut_factor: 0.5
