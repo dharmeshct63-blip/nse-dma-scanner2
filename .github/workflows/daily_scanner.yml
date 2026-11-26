@@ -1,0 +1,56 @@
+name: Daily 50-200 DMA Scanner
+
+on:
+  schedule:
+    # 11:00 UTC = 4:30 PM IST (Monday to Friday)
+    - cron: "0 11 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      backfill_days:
+        description: "Calendar days to backfill (e.g. 340 for initial 220+ trading day seed, 0 for daily)"
+        required: false
+        default: "0"
+      dry_run:
+        description: "Set to true to skip sending email"
+        required: false
+        default: "false"
+
+permissions:
+  contents: write
+
+jobs:
+  scan-and-alert:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run 50-200 DMA Scanner
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          ALERT_RECIPIENT: ${{ secrets.ALERT_RECIPIENT }}
+          PORTFOLIO_CAPITAL: ${{ secrets.PORTFOLIO_CAPITAL }}
+        run: |
+          ARGS="--backfill-days ${{ github.event.inputs.backfill_days || '0' }}"
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            ARGS="$ARGS --dry-run"
+          fi
+          python src/run_daily.py $ARGS
+
+      - name: Commit updated history and latest scan report
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/nse_history.csv.gz reports/latest_scan.json
+          git diff --staged --quiet || git commit -m "chore: update NSE Bhavcopy history & daily scan"
+          git push
